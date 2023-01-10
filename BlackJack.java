@@ -11,19 +11,25 @@ public class BlackJack {
         // Playareaクラスのインスタンスを要素として持つリスト
         ArrayList<Playarea> playarea_list = new ArrayList<>();
 
+        int CPU_NUM = 4;
+
         // 各プレイヤーの手札の合計値を格納する変数
         int dealer_sum = 0;
         int player_sum = 0;
+        int[] cpu_sum = new int[CPU_NUM];
+        
 
         // バーストしたか否かのフラグ
-        boolean burst_frag, dealer_burst_flag;
+        boolean burst_flag = false;
+        boolean dealer_burst_flag = false;
+        boolean[] CPU_burst_flag = new boolean[CPU_NUM];
 
         // 初期化（山札を作る）
         deck.initialize();
 
         // Dealer用とPlayer用のPlayareaを2つ作成して、playarea_listに格納。リストの０番目をdealer、1番目をPlayerとして扱う
         // 各手札に2枚づつ格納・表示
-        for (int p = 0; p < 2; p++) {
+        for (int p = 0; p < 2+CPU_NUM; p++) {
             playarea_list.add(new Playarea());
 
             // deal_card_list : Cardクラスのインスタンスを要素として持つリスト
@@ -52,93 +58,132 @@ public class BlackJack {
                 // 合計値の表示
                 System.out.println("合計値:" + dealer_sum);
                 System.out.println("");
-            } else {
+            } else if (p == 1){
                 System.out.println("Player1の手札:");
                 playarea.show();
                 player_sum = playarea.sum();
                 System.out.println("合計値:" + player_sum);
                 System.out.println("");
+            } else {
+                System.out.println("CPU"+ (p-2) +"の手札:");
+                playarea.show();
+                cpu_sum[p-2] = playarea.sum();
+                System.out.println("合計値:" + cpu_sum[p-2]);
+                System.out.println("");
             }
         }
+
 
         // ゲームの処理
         while (true) {
 
-            // hitかstandかを選択
-            // commandで「commandをcloseしろ」と警告が出てるが、閉じると2回目以降の標準入力ができなくなるから無視(https://kokishi-computing.com/web/2021/04/28/java-scanner-close/)
-            Scanner command = new Scanner(System.in);
-            System.out.println("hitかstandを入力してください");
-            String command_res = command.nextLine();
-            
-            // hitした時の処理
-            // 注意 ： javaは変数ごとに同じ文字列でも異なるメモリを確保するため、文字列が一致しているかではなく、文字列を格納している変数のメモリの場所を比較するため比較演算子"=="で文字列一致ができない。
-            if (command_res.equals("hit")) {
+            //playerの処理
+            //playerがバーストしていても処理を継続するため変更
+            while(true){
 
-                // PlayerのPlayareaを取得する
-                Playarea hit_playarea = playarea_list.get(1);
-
-                // deal関数でカードを1枚もらう : [[card1]]みたいな形で値が返ってくる。card1はCardクラスのインスタンス
-                ArrayList<Card> deal_hit_card = deck.deal(1);
-
-                // [[card1]]の0番目を取得する : [card1]がhit_cardに格納される
-                Card hit_card = deal_hit_card.get(0);
-
-                // プレイヤーのPlayareaの手札に引いたカードを格納する
-                hit_playarea.card_list.add(hit_card);
-
-                // 手札の合計値を計算・表示
-                player_sum = hit_playarea.sum();
-                System.out.println("Player1の手札:");
-                hit_playarea.show();
-                System.out.println("合計値:" + player_sum);
-                System.out.println("");
-
-                // プレイヤーがバーストしていないかの判定
-                burst_frag = hit_playarea.is_burst();
-
-                // プレイヤーがhitしたタイミングでバーストしたらその時点でプレイヤーの負け
-                if (burst_frag == true) {
-                    System.out.println("You Lose");
-                    command.close();
-                    break;
-                }
-            } else {
-                // プレイヤーが　standした時の処理
-                // ディーラーのターン
-
-                // DealerのPlayareaの作成
-                Playarea dealer = playarea_list.get(0);
-
-                // Dealerのhit処理とstand処理の分岐
-                while (true){
-                    if (dealer.think().equals("hit")) {
-                        ArrayList<Card> dealer_hit = deck.deal(1);
-                        Card dealer_hit_card = dealer_hit.get(0);
-                        dealer.card_list.add(dealer_hit_card);
-                    } else {
-                        System.out.println("Dealerの手札:");
-                        dealer.show();
-                        System.out.println("合計値:" + dealer.sum());
-
+                // hitかstandかを選択
+                // commandで「commandをcloseしろ」と警告が出てるが、閉じると2回目以降の標準入力ができなくなるから無視(https://kokishi-computing.com/web/2021/04/28/java-scanner-close/)
+                Scanner command = new Scanner(System.in);
+                System.out.println("hitかstandを入力してください");
+                String command_res = command.nextLine();
+                
+                // hitした時の処理
+                // 注意 ： javaは変数ごとに同じ文字列でも異なるメモリを確保するため、文字列が一致しているかではなく、文字列を格納している変数のメモリの場所を比較するため比較演算子"=="で文字列一致ができない。
+                if (command_res.equals("hit")) {
+                    hitmove(1, playarea_list,deck, player_sum, burst_flag);
+                    // バースト確認
+                    if (burst_flag == true) {
                         break;
                     }
-                }
-
-                // ディーラーがバーストしているかの判定
-                dealer_burst_flag = dealer.is_burst();
-                
-                // ディーラーがこのタイミングでバーストしたらプレイヤーの勝ち
-                if (dealer_burst_flag == true) {
-                    System.out.println("You Win");
-                    break;
                 } else {
-
-                    // プレイヤーもディーラーもバーストしなかった時の処理
-                    judge(dealer_sum, player_sum);
+                // プレイヤーが　standした時の処理
                     break;
                 }
             }
+            //cpuのターン
+            for(int i = 0;i < CPU_NUM; i++){
+                Playarea CPU = playarea_list.get(i+2);
+                while(true){
+                    if (CPU.think().equals("hit")) {
+                        ArrayList<Card> dealer_hit = deck.deal(1);
+                        Card dealer_hit_card = dealer_hit.get(0);
+                        CPU.card_list.add(dealer_hit_card);
+                    } else {
+                        System.out.println("Dealerの手札:");
+                        CPU.show();
+                        System.out.println("合計値:" + CPU.sum());
+
+                        break;
+                    }
+                    // ディーラーがバーストしているかの判定
+                    CPU_burst_flag[i-2] = CPU.is_burst();
+                    
+                    // ディーラーがこのタイミングでバーストしたらプレイヤーの勝ち
+                    if (CPU_burst_flag[i-2] == true) {
+                        break;
+                    }
+                }
+            }
+            
+            
+            // ディーラーのターン
+
+            // DealerのPlayareaの作成
+            Playarea dealer = playarea_list.get(0);
+
+            // Dealerのhit処理とstand処理の分岐
+            while (true){
+                if (dealer.think().equals("hit")) {
+                    ArrayList<Card> dealer_hit = deck.deal(1);
+                    Card dealer_hit_card = dealer_hit.get(0);
+                    dealer.card_list.add(dealer_hit_card);
+                } else {
+                    System.out.println("Dealerの手札:");
+                    dealer.show();
+                    System.out.println("合計値:" + dealer.sum());
+
+                    break;
+                }
+            }
+            // ディーラーがバーストしているかの判定
+            dealer_burst_flag = dealer.is_burst();
+            
+            // ディーラーがこのタイミングでバーストしたらプレイヤーの勝ち
+            if (dealer_burst_flag == true) {
+                System.out.println("You Win");
+                break;
+            } else {
+
+                // プレイヤーもディーラーもバーストしなかった時の処理
+                judge(dealer_sum, player_sum);
+                break;
+            }
+        
         }
+    }
+    
+    public static void hitmove(int index, ArrayList<Playarea>playarea_list, Deck deck, int sum, boolean flag){
+        // PlayerのPlayareaを取得する
+        Playarea hit_playarea = playarea_list.get(1);
+
+        // deal関数でカードを1枚もらう : [[card1]]みたいな形で値が返ってくる。card1はCardクラスのインスタンス
+        ArrayList<Card> deal_hit_card = deck.deal(1);
+
+        // [[card1]]の0番目を取得する : [card1]がhit_cardに格納される
+        Card hit_card = deal_hit_card.get(0);
+
+        // プレイヤーのPlayareaの手札に引いたカードを格納する
+        hit_playarea.card_list.add(hit_card);
+
+        // 手札の合計値を計算・表示
+        sum = hit_playarea.sum();
+        System.out.println("Player1の手札:");
+        hit_playarea.show();
+        System.out.println("合計値:" + sum);
+        System.out.println("");
+
+        // プレイヤーがバーストしていないかの判定
+        flag = hit_playarea.is_burst();
     }
 
     // プレイヤーもディーラーもバーストしなかった時に呼ばれる
@@ -385,3 +430,9 @@ class Playarea {
         }
     }
 }
+
+/*
+- playarea_listの要素数増やす
+- ディーラーの動きを関数にしてCPUに流用
+- 勝敗判定をディーラー対各プレイヤーにする
+*/

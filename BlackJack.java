@@ -22,7 +22,7 @@ public class BlackJack {
         // バーストしたか否かのフラグ
         boolean burst_flag = false;
         boolean dealer_burst_flag = false;
-        boolean[] CPU_burst_flag = new boolean[CPU_NUM];
+        boolean[] cpu_burst_flag = new boolean[CPU_NUM];
 
         // 初期化（山札を作る）
         deck.initialize();
@@ -135,13 +135,15 @@ public class BlackJack {
 
                         break;
                     }
-                    // ディーラーがバーストしているかの判定
-                    CPU_burst_flag[i] = CPU.is_burst();
+
                     
                     // ディーラーがこのタイミングでバーストしたらプレイヤーの勝ち
-                    if (CPU_burst_flag[i] == true) {
-                        break;
+                    if (cpu_burst_flag[i] == true) {
+
                     }
+                    // ディーラーがバーストしているかの判定
+                CPU.sum();
+                cpu_burst_flag[i] = CPU.is_burst();
                 }
             }
             
@@ -167,43 +169,48 @@ public class BlackJack {
             }
             // ディーラーがバーストしているかの判定
             dealer_burst_flag = dealer.is_burst();
-            
-            // ディーラーがこのタイミングでバーストしたらプレイヤーの勝ち
-            if (dealer_burst_flag == true) {
-                break;
-            } else {
 
-                // プレイヤーもディーラーもバーストしなかった時の処理
-                judge(dealer_sum, player_sum);
-                for(int i = 0; i<4; i++){
-                    judge_cpu(dealer_sum, cpu_sum[i], i);
-                }
-                break;
+            //プレイヤーとの勝敗判定
+            judge(dealer_sum,dealer_burst_flag, player_sum, burst_flag);
+            for(int i = 0; i<4; i++){
+                judge_cpu(dealer_sum,dealer_burst_flag, cpu_sum[i], cpu_burst_flag[i], i);
             }
+            break;
         
         }
     }
     
 
     // プレイヤーもディーラーもバーストしなかった時に呼ばれる
-    public static void judge(int d_sum, int p_sum){
-
-        // ディーラーの合計値よりプレイヤーの方が高かったらプレイヤーの勝ち
-        if (d_sum < p_sum) {
+    public static void judge(int d_sum, boolean d_flag, int p_sum, boolean p_flag){
+        
+        if(p_flag == true){
+            //プレイヤーがバーストしてたらプレイヤーの負け
+            System.out.println("You BLose");
+        }else if(d_flag == true){
+            //ディーラーがバーストしてたらプレイヤーの勝ち
+            System.out.println("You BWin");
+        }else if (d_sum < p_sum) {
+            // ディーラーの合計値よりプレイヤーの方が高かったらプレイヤーの勝ち
             System.out.println("You Win");
-        
-        // ディーラーの合計値がプレイヤーよりも高かったらプレイヤーの負け
         } else if (d_sum > p_sum) {
+            // ディーラーの合計値がプレイヤーよりも高かったらプレイヤーの負け
             System.out.println("You Lose");
-        
-        //　引き分け 
         } else {
+            //　引き分け 
             System.out.println("Draw");
         }
     }
         // プレイヤーもディーラーもバーストしなかった時に呼ばれる
-        public static void judge_cpu(int d_sum, int p_sum, int cpu_num){
-
+        public static void judge_cpu(int d_sum, boolean d_flag, int p_sum, boolean p_flag, int cpu_num){
+            
+            if(p_flag == true){
+                //プレイヤーがバーストしてたらプレイヤーの負け
+                System.out.println("CPU"+cpu_num+" BLose");
+            }else if(d_flag == true){
+                //ディーラーがバーストしてたらプレイヤーの勝ち
+                System.out.println("CPU"+cpu_num+" BWin");
+            }else 
             // ディーラーの合計値よりプレイヤーの方が高かったらプレイヤーの勝ち
             if (d_sum < p_sum) {
                 System.out.println("CPU"+cpu_num+" Win");

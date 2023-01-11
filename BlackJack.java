@@ -81,17 +81,22 @@ public class BlackJack {
             //playerがバーストしていても処理を継続するため変更
             while(true){
 
+                // PlayerのPlayareaを取得する
+                Playarea hit_playarea = playarea_list.get(1);   
+
                 // hitかstandかを選択
                 // commandで「commandをcloseしろ」と警告が出てるが、閉じると2回目以降の標準入力ができなくなるから無視(https://kokishi-computing.com/web/2021/04/28/java-scanner-close/)
+                
                 Scanner command = new Scanner(System.in);
-                System.out.println("hitかstandを入力してください");
+                System.out.println("hitかstandを入力してください"+ hit_playarea.sum());
                 String command_res = command.nextLine();
+
+             
                 
                 // hitした時の処理
                 // 注意 ： javaは変数ごとに同じ文字列でも異なるメモリを確保するため、文字列が一致しているかではなく、文字列を格納している変数のメモリの場所を比較するため比較演算子"=="で文字列一致ができない。
                 if (command_res.equals("hit")) {
-                    // PlayerのPlayareaを取得する
-                    Playarea hit_playarea = playarea_list.get(1);
+
 
                     // deal関数でカードを1枚もらう : [[card1]]みたいな形で値が返ってくる。card1はCardクラスのインスタンス
                     ArrayList<Card> deal_hit_card = deck.deal(1);
@@ -110,6 +115,7 @@ public class BlackJack {
                     System.out.println("");
 
                     // プレイヤーがバーストしていないかの判定
+                    player_sum = hit_playarea.sum();
                     burst_flag = hit_playarea.is_burst();
                     // バースト確認
                     if (burst_flag == true) {
@@ -117,6 +123,7 @@ public class BlackJack {
                     }
                 } else {
                 // プレイヤーが　standした時の処理
+                    player_sum = hit_playarea.sum();
                     break;
                 }
             }
@@ -142,7 +149,7 @@ public class BlackJack {
 
                     }
                     // ディーラーがバーストしているかの判定
-                CPU.sum();
+                cpu_sum[i] = CPU.sum();
                 cpu_burst_flag[i] = CPU.is_burst();
                 }
             }
@@ -168,6 +175,7 @@ public class BlackJack {
                 }
             }
             // ディーラーがバーストしているかの判定
+            dealer_sum = dealer.sum();
             dealer_burst_flag = dealer.is_burst();
 
             //プレイヤーとの勝敗判定
@@ -200,6 +208,7 @@ public class BlackJack {
             //　引き分け 
             System.out.println("Draw");
         }
+        System.out.println( d_sum + " - " + p_sum);
     }
         // プレイヤーもディーラーもバーストしなかった時に呼ばれる
         public static void judge_cpu(int d_sum, boolean d_flag, int p_sum, boolean p_flag, int cpu_num){
@@ -223,6 +232,7 @@ public class BlackJack {
             } else {
                 System.out.println("CPU"+cpu_num+" Draw");
             }
+            System.out.println( d_sum + " - " + p_sum);
         }
 }
 

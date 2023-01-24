@@ -24,12 +24,15 @@ public class BlackJack {
         boolean dealer_burst_flag = false;
         boolean[] cpu_burst_flag = new boolean[CPU_NUM];
 
+        int split_count = 0;
+
         // 初期化（山札を作る）
         deck.initialize();
 
         // Dealer用とPlayer用のPlayareaを2つ作成して、playarea_listに格納。リストの０番目をdealer、1番目をPlayerとして扱う
         // 各手札に2枚づつ格納・表示
         for (int p = 0; p < 2+CPU_NUM; p++) {
+            //0:player 1:dealer 2~5:CPU 6~:player(split)
             playarea_list.add(new Playarea());
 
             // deal_card_list : Cardクラスのインスタンスを要素として持つリスト
@@ -88,9 +91,13 @@ public class BlackJack {
                 // commandで「commandをcloseしろ」と警告が出てるが、閉じると2回目以降の標準入力ができなくなるから無視(https://kokishi-computing.com/web/2021/04/28/java-scanner-close/)
                 
                 Scanner command = new Scanner(System.in);
-                System.out.println("hitかstandを入力してください"+ hit_playarea.sum());
+                if(hit_playarea.cansplit_check() == true){
+                    System.out.println("hitかstandかsplitを入力してください"+ hit_playarea.sum());
+                }else{
+                    System.out.println("hitかstandを入力してください"+ hit_playarea.sum());
+                }
                 String command_res = command.nextLine();
-
+                
              
                 
                 // hitした時の処理
@@ -121,11 +128,18 @@ public class BlackJack {
                     if (burst_flag == true) {
                         break;
                     }
-                } else {
+                } else if (command_res.equals("stand")) {
                 // プレイヤーが　standした時の処理
                     player_sum = hit_playarea.sum();
                     break;
+                } else if (command_res.equals("split") && hit_playarea.cansplit_check() == true) {
+                // プレイヤーが　splitした時の処理
+                        split_count++;
+
+                        player_sum = hit_playarea.sum();
+                        break;
                 }
+
             }
             //cpuのターン
             for(int i = 0;i < CPU_NUM; i++){
@@ -460,6 +474,29 @@ class Playarea {
                 return "stand";
             }
         }
+    }
+
+    public ArrayList<Card> get_card_list(){
+        return card_list;
+    }
+
+    public Boolean cansplit_check(){
+        int A, B;
+        A = this.get_card_list().get(0).get_number().get(0);
+        //System.out.println(A);
+        B = this.get_card_list().get(1).get_number().get(0);
+        //System.out.println(B);
+        if(A == B){
+            return true;
+        }
+        return false;
+    }
+    public ArrayList<Card> split(){
+        A = this.get_card_list().get(0);
+        B = this.get_card_list().get(1);
+        System.out.println(A);
+        System.out.println(B);
+        return card_list;
     }
 }
 

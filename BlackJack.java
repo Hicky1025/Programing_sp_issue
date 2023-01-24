@@ -135,7 +135,7 @@ public class BlackJack {
                 } else if (command_res.equals("split") && hit_playarea.cansplit_check() == true) {
                 // プレイヤーが　splitした時の処理
                         split_count++;
-
+                        hit_playarea.split();
                         player_sum = hit_playarea.sum();
                         break;
                 }
@@ -491,12 +491,25 @@ class Playarea {
         }
         return false;
     }
-    public ArrayList<Card> split(){
-        A = this.get_card_list().get(0);
-        B = this.get_card_list().get(1);
-        System.out.println(A);
-        System.out.println(B);
-        return card_list;
+    public ArrayList<ArrayList<Playarea>> split(){
+        Card A = this.get_card_list().get(0);
+        Card B = this.get_card_list().get(1);
+
+        Playarea playareaA;
+        Playarea playareaB;
+
+        
+
+
+        ArrayList<Playarea> newlist = new ArrayList<Playarea>();
+
+        playarea_list.add(new Playarea());
+
+        //int a = A.get_number().get(0);
+        //int b = B.get_number().get(0);
+        //System.out.println(b);
+        //System.out.println(a);
+        return newlist;
     }
 }
 

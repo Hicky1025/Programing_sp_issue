@@ -121,12 +121,35 @@ public class BlackJack {
                     if (burst_flag == true) {
                         break;
                     }
-                } else {
+                } else if (command_res.equals("stand")){
                 // プレイヤーが　standした時の処理
                     player_sum = hit_playarea.sum();
                     break;
+                } else if (command_res.equals("double")){
+                // プレイヤーがdoubleした時の処理
+                    // deal関数でカードを1枚もらう : [[card1]]みたいな形で値が返ってくる。card1はCardクラスのインスタンス
+                    ArrayList<Card> deal_hit_card = deck.deal(1);
+
+                    // [[card1]]の0番目を取得する : [card1]がhit_cardに格納される
+                    Card hit_card = deal_hit_card.get(0);
+
+                    // プレイヤーのPlayareaの手札に引いたカードを格納する
+                    hit_playarea.card_list.add(hit_card);
+
+                    // 手札の合計値を計算・表示
+                    int sum = hit_playarea.sum();
+                    System.out.println("Player1の手札:");
+                    hit_playarea.show();
+                    System.out.println("合計値:" + sum);
+                    System.out.println("");
+
+                    // プレイヤーがバーストしていないかの判定
+                    player_sum = hit_playarea.sum();
+                    burst_flag = hit_playarea.is_burst();
+                    break;
                 }
             }
+
             //cpuのターン
             for(int i = 0;i < CPU_NUM; i++){
                 Playarea CPU = playarea_list.get(i+2);
@@ -142,7 +165,6 @@ public class BlackJack {
 
                         break;
                     }
-
                     
                     // ディーラーがこのタイミングでバーストしたらプレイヤーの勝ち
                     if (cpu_burst_flag[i] == true) {
@@ -154,7 +176,7 @@ public class BlackJack {
                 }
             }
             
-            
+
             // ディーラーのターン
 
             // DealerのPlayareaの作成
@@ -210,30 +232,31 @@ public class BlackJack {
         }
         System.out.println( d_sum + " - " + p_sum);
     }
-        // プレイヤーもディーラーもバーストしなかった時に呼ばれる
-        public static void judge_cpu(int d_sum, boolean d_flag, int p_sum, boolean p_flag, int cpu_num){
-            
-            if(p_flag == true){
-                //プレイヤーがバーストしてたらプレイヤーの負け
-                System.out.println("CPU"+cpu_num+" BLose");
-            }else if(d_flag == true){
-                //ディーラーがバーストしてたらプレイヤーの勝ち
-                System.out.println("CPU"+cpu_num+" BWin");
-            }else 
-            // ディーラーの合計値よりプレイヤーの方が高かったらプレイヤーの勝ち
-            if (d_sum < p_sum) {
-                System.out.println("CPU"+cpu_num+" Win");
-            
-            // ディーラーの合計値がプレイヤーよりも高かったらプレイヤーの負け
-            } else if (d_sum > p_sum) {
-                System.out.println("CPU"+cpu_num+" Lose");
-            
-            //　引き分け 
-            } else {
-                System.out.println("CPU"+cpu_num+" Draw");
-            }
-            System.out.println( d_sum + " - " + p_sum);
+
+    // プレイヤーもディーラーもバーストしなかった時に呼ばれる
+    public static void judge_cpu(int d_sum, boolean d_flag, int p_sum, boolean p_flag, int cpu_num){
+        
+        if(p_flag == true){
+            //プレイヤーがバーストしてたらプレイヤーの負け
+            System.out.println("CPU"+cpu_num+" BLose");
+        }else if(d_flag == true){
+            //ディーラーがバーストしてたらプレイヤーの勝ち
+            System.out.println("CPU"+cpu_num+" BWin");
+        }else 
+        // ディーラーの合計値よりプレイヤーの方が高かったらプレイヤーの勝ち
+        if (d_sum < p_sum) {
+            System.out.println("CPU"+cpu_num+" Win");
+        
+        // ディーラーの合計値がプレイヤーよりも高かったらプレイヤーの負け
+        } else if (d_sum > p_sum) {
+            System.out.println("CPU"+cpu_num+" Lose");
+        
+        //　引き分け 
+        } else {
+            System.out.println("CPU"+cpu_num+" Draw");
         }
+        System.out.println( d_sum + " - " + p_sum);
+    }
 }
 
 class Deck {

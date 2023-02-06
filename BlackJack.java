@@ -90,6 +90,9 @@ public class BlackJack {
 
         ///現在操作しているプレイエリア
         int current = 0;
+
+        // hitした後にdoubleが出てこないようにするためのフラグ
+        boolean double_flag = false;
         
         // ゲームの処理
         while (true) {
@@ -116,10 +119,19 @@ public class BlackJack {
                     // commandで「commandをcloseしろ」と警告が出てるが、閉じると2回目以降の標準入力ができなくなるから無視(https://kokishi-computing.com/web/2021/04/28/java-scanner-close/)
                     
                     Scanner command = new Scanner(System.in);
-                    if(hit_playarea.cansplit_check() == true){
-                        System.out.println("split_" + i + ":hitかstandかdoubleかsplitを入力してください"+ hit_playarea.sum());
-                    }else{
-                        System.out.println("split_" + i + ":hitかstandかdoubleを入力してください"+ hit_playarea.sum());
+                    if(double_flag){
+                        if(hit_playarea.cansplit_check() == true){
+                            System.out.println("split_" + i + ":hitかstandかsplitを入力してください"+ hit_playarea.sum());
+                        }else{
+                            System.out.println("split_" + i + ":hitかstandを入力してください"+ hit_playarea.sum());
+                        }
+                    }
+                    else{
+                        if(hit_playarea.cansplit_check() == true){
+                            System.out.println("split_" + i + ":hitかstandかdoubleかsplitを入力してください"+ hit_playarea.sum());
+                        }else{
+                            System.out.println("split_" + i + ":hitかstandかdoubleを入力してください"+ hit_playarea.sum());
+                        }
                     }
                     String command_res = command.nextLine();
                     
@@ -158,12 +170,14 @@ public class BlackJack {
                         }else{
                             playing = true;
                         }
+
+                        double_flag = true;
                     } else if (command_res.equals("stand")) {
                     // プレイヤーが　standした時の処理
                         player_sum = hit_playarea.sum();
                         split_stand[current] = true;
                         //break;
-                    } else if (command_res.equals("double")){
+                    } else if (command_res.equals("double") && double_flag == true){
                         // プレイヤーがdoubleした時の処理
                             // deal関数でカードを1枚もらう : [[card1]]みたいな形で値が返ってくる。card1はCardクラスのインスタンス
                             ArrayList<Card> deal_hit_card = deck.deal(1);
@@ -293,7 +307,7 @@ public class BlackJack {
                     judge(dealer_sum, dealer_burst_flag, split_sum[current], split_burst[current], i);
                 
                }
-        }
+            }
 
 
             //CPUとの勝敗判定

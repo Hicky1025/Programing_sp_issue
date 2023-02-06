@@ -117,9 +117,9 @@ public class BlackJack {
                     
                     Scanner command = new Scanner(System.in);
                     if(hit_playarea.cansplit_check() == true){
-                        System.out.println("split_" + i + ":hitかstandかsplitを入力してください"+ hit_playarea.sum());
+                        System.out.println("split_" + i + ":hitかstandかdoubleかsplitを入力してください"+ hit_playarea.sum());
                     }else{
-                        System.out.println("split_" + i + ":hitかstandを入力してください"+ hit_playarea.sum());
+                        System.out.println("split_" + i + ":hitかstandかdoubleを入力してください"+ hit_playarea.sum());
                     }
                     String command_res = command.nextLine();
                     
@@ -163,6 +163,28 @@ public class BlackJack {
                         player_sum = hit_playarea.sum();
                         split_stand[current] = true;
                         //break;
+                    } else if (command_res.equals("double")){
+                        // プレイヤーがdoubleした時の処理
+                            // deal関数でカードを1枚もらう : [[card1]]みたいな形で値が返ってくる。card1はCardクラスのインスタンス
+                            ArrayList<Card> deal_hit_card = deck.deal(1);
+        
+                            // [[card1]]の0番目を取得する : [card1]がhit_cardに格納される
+                            Card hit_card = deal_hit_card.get(0);
+        
+                            // プレイヤーのPlayareaの手札に引いたカードを格納する
+                            hit_playarea.card_list.add(hit_card);
+        
+                            // 手札の合計値を計算・表示
+                            int sum = hit_playarea.sum();
+                            System.out.println("Player1の手札:");
+                            hit_playarea.show();
+                            System.out.println("合計値:" + sum);
+                            System.out.println("");
+        
+                            // プレイヤーがバーストしていないかの判定
+                            player_sum = hit_playarea.sum();
+                            burst_flag = hit_playarea.is_burst();
+                            break;
                     } else if (command_res.equals("split") && hit_playarea.cansplit_check() == true) {
                     ///プレイヤーが　splitした時の処理
                         ///splitメソッドが返すリスト(プレイエリア)を返す

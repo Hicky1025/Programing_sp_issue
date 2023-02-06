@@ -104,13 +104,13 @@ public class BlackJack {
 
                     ///どのプレイエリアを操作するのかの指定　間にCPUが挟まっているため生まれた残念なコード
                     if(i == 0)current = 1;
-                    else current = 5+split_count;
-
+                    else current = 5+i;
+                    System.out.println(current);
                     // PlayerのPlayareaを取得する
                     Playarea hit_playarea = playarea_list.get(current);  
 
-                    //繰り返しにより必要になった、操作
-                    if (hit_playarea.is_burst() == true || split_stand[current] == true)break;
+                    //繰り返しにより必要になった操作
+                    if (hit_playarea.is_burst() == true || split_stand[current] == true)continue;
 
                     // hitかstandかを選択
                     // commandで「commandをcloseしろ」と警告が出てるが、閉じると2回目以降の標準入力ができなくなるから無視(https://kokishi-computing.com/web/2021/04/28/java-scanner-close/)
@@ -152,8 +152,8 @@ public class BlackJack {
                         burst_flag = hit_playarea.is_burst();
                         split_burst[current] = hit_playarea.is_burst();
                         // バースト確認
-                        if (split_burst[current] == true ) {
-                            
+                        if (split_burst[current] == true) {
+                            continue;
                             //break;
                         }else{
                             playing = true;
@@ -193,7 +193,6 @@ public class BlackJack {
                         //System.out.println(playarea_list.get(1).sum());
                         //System.out.println(playarea_list.get(6+split_count).sum());
                         
-
                         split_count++;
                         playing = true;
                         break;
@@ -203,8 +202,7 @@ public class BlackJack {
                 
                 }
                 
-                System.out.println(playing);
-                
+                //System.out.println(playing);
                 
                 if(playing == false)break;
 
@@ -267,7 +265,7 @@ public class BlackJack {
                 for(int i = 0; i <= split_count; i++){
                     ///どのプレイエリアを操作するのかの指定　間にCPUが挟まっているため生まれた残念なコード
                     if(i == 0)current = 1;
-                    else current = 5+split_count;
+                    else current = 5+i;
                     judge(dealer_sum, dealer_burst_flag, split_sum[current], split_burst[current], i);
                 
                }

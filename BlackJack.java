@@ -105,7 +105,8 @@ public class BlackJack {
                     ///どのプレイエリアを操作するのかの指定　間にCPUが挟まっているため生まれた残念なコード
                     if(i == 0)current = 1;
                     else current = 5+i;
-                    System.out.println(current);
+                    //System.out.println(current);
+                    
                     // PlayerのPlayareaを取得する
                     Playarea hit_playarea = playarea_list.get(current);  
 

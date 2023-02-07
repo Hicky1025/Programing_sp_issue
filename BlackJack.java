@@ -11,19 +11,40 @@ public class BlackJack {
         // Playareaクラスのインスタンスを要素として持つリスト
         ArrayList<Playarea> playarea_list = new ArrayList<>();
 
+        int CPU_NUM = 4;
+
         // 各プレイヤーの手札の合計値を格納する変数
         int dealer_sum = 0;
         int player_sum = 0;
+        int[] cpu_sum = new int[CPU_NUM];
+        
 
         // バーストしたか否かのフラグ
-        boolean burst_frag, dealer_burst_flag;
+        boolean burst_flag = false;
+        boolean dealer_burst_flag = false;
+        boolean[] cpu_burst_flag = new boolean[CPU_NUM];
 
+        ///split関連
+        int split_count = 0;
+        ArrayList<Playarea> split_list = new ArrayList<>();
+        boolean playing = false;
+        boolean[] split_stand = new boolean[10];
+        boolean[] split_burst = new boolean[10];
+        int[] split_sum = new int[10];
+
+        for(int i = 0; i < 10; i++){
+            split_stand[i] = false;
+            split_burst[i] = false;
+            split_sum[i] = 0;
+        }
+        
         // 初期化（山札を作る）
         deck.initialize();
 
         // Dealer用とPlayer用のPlayareaを2つ作成して、playarea_listに格納。リストの０番目をdealer、1番目をPlayerとして扱う
         // 各手札に2枚づつ格納・表示
-        for (int p = 0; p < 2; p++) {
+        for (int p = 0; p < 2+CPU_NUM; p++) {
+            //0:dealer 1:player 2~5:CPU 6~:player(split)
             playarea_list.add(new Playarea());
 
             // deal_card_list : Cardクラスのインスタンスを要素として持つリスト
@@ -52,111 +73,264 @@ public class BlackJack {
                 // 合計値の表示
                 System.out.println("合計値:" + dealer_sum);
                 System.out.println("");
-            } else {
+            } else if (p == 1){
                 System.out.println("Player1の手札:");
                 playarea.show();
                 player_sum = playarea.sum();
                 System.out.println("合計値:" + player_sum);
                 System.out.println("");
+            } else {
+                System.out.println("CPU"+ (p-2) +"の手札:");
+                playarea.show();
+                cpu_sum[p-2] = playarea.sum();
+                System.out.println("合計値:" + cpu_sum[p-2]);
+                System.out.println("");
             }
         }
 
+        ///現在操作しているプレイエリア
+        int current = 0;
+        
         // ゲームの処理
         while (true) {
 
-            // hitかstandかを選択
-            // commandで「commandをcloseしろ」と警告が出てるが、閉じると2回目以降の標準入力ができなくなるから無視(https://kokishi-computing.com/web/2021/04/28/java-scanner-close/)
-            Scanner command = new Scanner(System.in);
-            System.out.println("hitかstandを入力してください");
-            String command_res = command.nextLine();
-            
-            // hitした時の処理
-            // 注意 ： javaは変数ごとに同じ文字列でも異なるメモリを確保するため、文字列が一致しているかではなく、文字列を格納している変数のメモリの場所を比較するため比較演算子"=="で文字列一致ができない。
-            if (command_res.equals("hit")) {
+            //playerの処理
+            //playerがバーストしていても処理を継続するため変更
+            while(true){
+                //どのプレイエリアでも操作がなければプレイヤーの操作は終了
+                playing = false;
+                ///split用に外にfor文
+                for(int i = 0; i <= split_count; i++){
 
-                // PlayerのPlayareaを取得する
-                Playarea hit_playarea = playarea_list.get(1);
+                    ///どのプレイエリアを操作するのかの指定　間にCPUが挟まっているため生まれた残念なコード
+                    if(i == 0)current = 1;
+                    else current = 5+i;
+                    //System.out.println(current);
+                    
+                    // PlayerのPlayareaを取得する
+                    Playarea hit_playarea = playarea_list.get(current);  
 
-                // deal関数でカードを1枚もらう : [[card1]]みたいな形で値が返ってくる。card1はCardクラスのインスタンス
-                ArrayList<Card> deal_hit_card = deck.deal(1);
+                    //繰り返しにより必要になった操作
+                    if (hit_playarea.is_burst() == true || split_stand[current] == true)continue;
 
-                // [[card1]]の0番目を取得する : [card1]がhit_cardに格納される
-                Card hit_card = deal_hit_card.get(0);
+                    // hitかstandかを選択
+                    // commandで「commandをcloseしろ」と警告が出てるが、閉じると2回目以降の標準入力ができなくなるから無視(https://kokishi-computing.com/web/2021/04/28/java-scanner-close/)
+                    
+                    Scanner command = new Scanner(System.in);
+                    if(hit_playarea.cansplit_check() == true){
+                        System.out.println("split_" + i + ":hitかstandかsplitを入力してください"+ hit_playarea.sum());
+                    }else{
+                        System.out.println("split_" + i + ":hitかstandを入力してください"+ hit_playarea.sum());
+                    }
+                    String command_res = command.nextLine();
+                    
+                
+                    
+                    // hitした時の処理
+                    // 注意 ： javaは変数ごとに同じ文字列でも異なるメモリを確保するため、文字列が一致しているかではなく、文字列を格納している変数のメモリの場所を比較するため比較演算子"=="で文字列一致ができない。
+                    if (command_res.equals("hit")) {
+                        
 
-                // プレイヤーのPlayareaの手札に引いたカードを格納する
-                hit_playarea.card_list.add(hit_card);
+                        // deal関数でカードを1枚もらう : [[card1]]みたいな形で値が返ってくる。card1はCardクラスのインスタンス
+                        ArrayList<Card> deal_hit_card = deck.deal(1);
 
-                // 手札の合計値を計算・表示
-                player_sum = hit_playarea.sum();
-                System.out.println("Player1の手札:");
-                hit_playarea.show();
-                System.out.println("合計値:" + player_sum);
-                System.out.println("");
+                        // [[card1]]の0番目を取得する : [card1]がhit_cardに格納される
+                        Card hit_card = deal_hit_card.get(0);
 
-                // プレイヤーがバーストしていないかの判定
-                burst_frag = hit_playarea.is_burst();
+                        // プレイヤーのPlayareaの手札に引いたカードを格納する
+                        hit_playarea.card_list.add(hit_card);
 
-                // プレイヤーがhitしたタイミングでバーストしたらその時点でプレイヤーの負け
-                if (burst_frag == true) {
-                    System.out.println("You Lose");
-                    command.close();
-                    break;
+                        // 手札の合計値を計算・表示
+                        int sum = hit_playarea.sum();
+                        System.out.println("Player1の手札:");
+                        hit_playarea.show();
+                        System.out.println("合計値:" + sum);
+                        System.out.println("");
+
+                        // プレイヤーがバーストしていないかの判定
+                        player_sum = hit_playarea.sum();
+                        split_sum[current] = hit_playarea.sum();
+                        burst_flag = hit_playarea.is_burst();
+                        split_burst[current] = hit_playarea.is_burst();
+                        // バースト確認
+                        if (split_burst[current] == true) {
+                            continue;
+                            //break;
+                        }else{
+                            playing = true;
+                        }
+                    } else if (command_res.equals("stand")) {
+                    // プレイヤーが　standした時の処理
+                        player_sum = hit_playarea.sum();
+                        split_stand[current] = true;
+                        //break;
+                    } else if (command_res.equals("split") && hit_playarea.cansplit_check() == true) {
+                    ///プレイヤーが　splitした時の処理
+                        ///splitメソッドが返すリスト(プレイエリア)を返す
+                        playarea_list.set(current, hit_playarea.split().get(0));
+                        playarea_list.add(hit_playarea.split().get(1));
+
+                        ///それぞれに対してドローも行う
+
+                        ArrayList<Card> deal_card_list = deck.deal(1);
+
+                        Playarea playarea = playarea_list.get(current);
+
+                        for (int m = 0; m < deal_card_list.size(); m++){
+                            Card init_card = deal_card_list.get(m);
+                            playarea.card_list.add(init_card);
+                        }
+
+                        deal_card_list = deck.deal(1);
+                        ///ここのマジックナンバーはプレイヤーの人数(split除く)
+                        playarea = playarea_list.get(6+split_count);
+
+                        for (int m = 0; m < deal_card_list.size(); m++){
+                            Card init_card = deal_card_list.get(m);
+                            playarea.card_list.add(init_card);
+                        }
+                        split_sum[current]= playarea_list.get(1).sum();
+                        split_sum[6+split_count] = playarea_list.get(6+split_count).sum();
+                        //System.out.println(playarea_list.get(1).sum());
+                        //System.out.println(playarea_list.get(6+split_count).sum());
+                        
+                        split_count++;
+                        playing = true;
+                        break;
+
+                    
+                    }
+                
                 }
-            } else {
-                // プレイヤーが　standした時の処理
-                // ディーラーのターン
+                
+                //System.out.println(playing);
+                
+                if(playing == false)break;
 
-                // DealerのPlayareaの作成
-                Playarea dealer = playarea_list.get(0);
-
-                // Dealerのhit処理とstand処理の分岐
-                while (true){
-                    if (dealer.think().equals("hit")) {
+            }
+            //cpuのターン
+            for(int i = 0;i < CPU_NUM; i++){
+                Playarea CPU = playarea_list.get(i+2);
+                while(true){
+                    if (CPU.think().equals("hit")) {
                         ArrayList<Card> dealer_hit = deck.deal(1);
                         Card dealer_hit_card = dealer_hit.get(0);
-                        dealer.card_list.add(dealer_hit_card);
+                        CPU.card_list.add(dealer_hit_card);
                     } else {
-                        System.out.println("Dealerの手札:");
-                        dealer.show();
-                        System.out.println("合計値:" + dealer.sum());
+                        System.out.println("CPU"+i+"の手札:");
+                        CPU.show();
+                        System.out.println("合計値:" + CPU.sum());
 
                         break;
                     }
+
+                    
+                    // ディーラーがこのタイミングでバーストしたらプレイヤーの勝ち
+                    if (cpu_burst_flag[i] == true) {
+
+                    }
+                    // ディーラーがバーストしているかの判定
+                cpu_sum[i] = CPU.sum();
+                cpu_burst_flag[i] = CPU.is_burst();
                 }
+            }
+            
+            
+            // ディーラーのターン
 
-                // ディーラーがバーストしているかの判定
-                dealer_burst_flag = dealer.is_burst();
-                
-                // ディーラーがこのタイミングでバーストしたらプレイヤーの勝ち
-                if (dealer_burst_flag == true) {
-                    System.out.println("You Win");
-                    break;
+            // DealerのPlayareaの作成
+            Playarea dealer = playarea_list.get(0);
+
+            // Dealerのhit処理とstand処理の分岐
+            while (true){
+                if (dealer.think().equals("hit")) {
+                    ArrayList<Card> dealer_hit = deck.deal(1);
+                    Card dealer_hit_card = dealer_hit.get(0);
+                    dealer.card_list.add(dealer_hit_card);
                 } else {
+                    System.out.println("Dealerの手札:");
+                    dealer.show();
+                    System.out.println("合計値:" + dealer.sum());
 
-                    // プレイヤーもディーラーもバーストしなかった時の処理
-                    judge(dealer_sum, player_sum);
                     break;
                 }
             }
+            // ディーラーがバーストしているかの判定
+            dealer_sum = dealer.sum();
+            dealer_burst_flag = dealer.is_burst();
+
+            //プレイヤーとの勝敗判定
+            if(split_count == 0){
+                judge(dealer_sum, dealer_burst_flag, player_sum, burst_flag, 1);
+            }else{
+                for(int i = 0; i <= split_count; i++){
+                    ///どのプレイエリアを操作するのかの指定　間にCPUが挟まっているため生まれた残念なコード
+                    if(i == 0)current = 1;
+                    else current = 5+i;
+                    judge(dealer_sum, dealer_burst_flag, split_sum[current], split_burst[current], i);
+                
+               }
+        }
+
+
+            //CPUとの勝敗判定
+            for(int i = 0; i<4; i++){
+                                    ///どのプレイエリアを操作するのかの指定　間にCPUが挟まっているため生まれた残念なコード
+                    if(i == 0)current = 1;
+                    else current = 5+split_count;
+                judge_cpu(dealer_sum,dealer_burst_flag, cpu_sum[i], cpu_burst_flag[i], i);
+            }
+            break;
+        
         }
     }
+    
 
     // プレイヤーもディーラーもバーストしなかった時に呼ばれる
-    public static void judge(int d_sum, int p_sum){
-
-        // ディーラーの合計値よりプレイヤーの方が高かったらプレイヤーの勝ち
-        if (d_sum < p_sum) {
-            System.out.println("You Win");
+    public static void judge(int d_sum, boolean d_flag, int p_sum, boolean p_flag, int i){
         
-        // ディーラーの合計値がプレイヤーよりも高かったらプレイヤーの負け
+        if(p_flag == true){
+            //プレイヤーがバーストしてたらプレイヤーの負け
+            System.out.println("You_"+ i +" BLose");
+        }else if(d_flag == true){
+            //ディーラーがバーストしてたらプレイヤーの勝ち
+            System.out.println("You_"+ i +" BWin");
+        }else if (d_sum < p_sum) {
+            // ディーラーの合計値よりプレイヤーの方が高かったらプレイヤーの勝ち
+            System.out.println("You_"+ i +" Win");
         } else if (d_sum > p_sum) {
-            System.out.println("You Lose");
-        
-        //　引き分け 
+            // ディーラーの合計値がプレイヤーよりも高かったらプレイヤーの負け
+            System.out.println("You_"+ i +" Lose");
         } else {
-            System.out.println("Draw");
+            //　引き分け 
+            System.out.println("You_"+ i +" Draw");
         }
+        System.out.println( d_sum + " - " + p_sum);
     }
+        // プレイヤーもディーラーもバーストしなかった時に呼ばれる
+        public static void judge_cpu(int d_sum, boolean d_flag, int p_sum, boolean p_flag, int cpu_num){
+            
+            if(p_flag == true){
+                //プレイヤーがバーストしてたらプレイヤーの負け
+                System.out.println("CPU"+cpu_num+" BLose");
+            }else if(d_flag == true){
+                //ディーラーがバーストしてたらプレイヤーの勝ち
+                System.out.println("CPU"+cpu_num+" BWin");
+            }else 
+            // ディーラーの合計値よりプレイヤーの方が高かったらプレイヤーの勝ち
+            if (d_sum < p_sum) {
+                System.out.println("CPU"+cpu_num+" Win");
+            
+            // ディーラーの合計値がプレイヤーよりも高かったらプレイヤーの負け
+            } else if (d_sum > p_sum) {
+                System.out.println("CPU"+cpu_num+" Lose");
+            
+            //　引き分け 
+            } else {
+                System.out.println("CPU"+cpu_num+" Draw");
+            }
+            System.out.println( d_sum + " - " + p_sum);
+        }
 }
 
 class Deck {
@@ -384,4 +558,56 @@ class Playarea {
             }
         }
     }
+
+    public ArrayList<Card> get_card_list(){
+        return card_list;
+    }
+
+    public Boolean cansplit_check(){
+        int A, B;
+        A = this.get_card_list().get(0).get_number().get(0);
+        //System.out.println(A);
+        B = this.get_card_list().get(1).get_number().get(0);
+        //System.out.println(B);
+        if(A == B){
+            return true;
+        }
+        return false;
+    }
+    public ArrayList<Playarea> split(){
+        Card A = this.get_card_list().get(0);
+        Card B = this.get_card_list().get(1);
+
+        Playarea playareaA = new Playarea();
+        Playarea playareaB = new Playarea();
+
+        playareaA.card_list.add(A);
+        playareaB.card_list.add(B);
+
+        
+
+
+        ArrayList<Playarea> newlist = new ArrayList<Playarea>();
+        newlist.add(playareaA);
+        newlist.add(playareaB);
+
+
+
+        //int a = A.get_number().get(0);
+        //int b = B.get_number().get(0);
+        //System.out.println(b);
+        //System.out.println(a);
+        
+        //int a = A.get_number().get(0);
+        //int b = B.get_number().get(0);
+        //System.out.println(playareaA.sum());
+        //System.out.println(playareaB.sum());
+        return newlist;
+    }
 }
+
+/*
+- playarea_listの要素数増やす
+- ディーラーの動きを関数にしてCPUに流用
+- 勝敗判定をディーラー対各プレイヤーにする
+*/
